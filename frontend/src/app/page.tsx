@@ -81,7 +81,7 @@ export default function HomePage() {
   // Application Settings
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [backendUrl, setBackendUrl] = useState('http://localhost:5000/api');
+  const [backendUrl, setBackendUrl] = useState('/api');
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [batchSize, setBatchSize] = useState(25);
 
@@ -124,7 +124,7 @@ export default function HomePage() {
     const savedApiKey = localStorage.getItem('gemini_api_key') || '';
     setGeminiApiKey(savedApiKey);
 
-    const savedBackendUrl = localStorage.getItem('backend_url') || 'http://localhost:5000/api';
+    const savedBackendUrl = localStorage.getItem('backend_url') || '/api';
     setBackendUrl(savedBackendUrl);
 
     const savedBatchSize = Number(localStorage.getItem('batch_size')) || 25;
