@@ -84,6 +84,7 @@ export default function HomePage() {
   const [backendUrl, setBackendUrl] = useState('/api');
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [batchSize, setBatchSize] = useState(25);
+  const [isServerApiKeySet, setIsServerApiKeySet] = useState(false);
 
   // File & CSV States
   const [fileName, setFileName] = useState('');
@@ -115,6 +116,22 @@ export default function HomePage() {
   const [isDragActive, setIsDragActive] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Check if server has Gemini API key set
+  const checkServerKeyStatus = async (urlToUse: string) => {
+    try {
+      const res = await fetch(`${urlToUse}/status`);
+      if (res.ok) {
+        const data = await res.json();
+        setIsServerApiKeySet(!!data.hasApiKey);
+      } else {
+        setIsServerApiKeySet(false);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch server status:', err);
+      setIsServerApiKeySet(false);
+    }
+  };
+
   // Load configuration and theme from LocalStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'dark';
@@ -129,6 +146,8 @@ export default function HomePage() {
 
     const savedBatchSize = Number(localStorage.getItem('batch_size')) || 25;
     setBatchSize(savedBatchSize);
+
+    checkServerKeyStatus(savedBackendUrl);
   }, []);
 
   // Theme Toggler
@@ -151,6 +170,7 @@ export default function HomePage() {
     localStorage.setItem('batch_size', size.toString());
 
     setIsSettingsOpen(false);
+    checkServerKeyStatus(url);
   };
 
   // Drag and Drop handlers
@@ -248,7 +268,7 @@ export default function HomePage() {
 
   // Run AI Batch Extraction
   const startAiExtraction = async () => {
-    if (!geminiApiKey) {
+    if (!geminiApiKey && !isServerApiKeySet) {
       setIsSettingsOpen(true);
       alert('Please configure your Gemini API Key in the settings panel first!');
       return;
@@ -501,16 +521,20 @@ export default function HomePage() {
                 gap: '0.4rem', 
                 padding: '0.4rem 0.8rem', 
                 borderRadius: '99px',
-                background: geminiApiKey ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                border: `1px solid ${geminiApiKey ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+                background: (geminiApiKey || isServerApiKeySet) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                border: `1px solid ${(geminiApiKey || isServerApiKeySet) ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
                 fontSize: '0.75rem',
-                color: geminiApiKey ? 'var(--success)' : 'var(--danger)',
+                color: (geminiApiKey || isServerApiKeySet) ? 'var(--success)' : 'var(--danger)',
                 cursor: 'pointer'
               }}
               onClick={() => setIsSettingsOpen(true)}
             >
-              {geminiApiKey ? <Check size={12} /> : <AlertCircle size={12} />}
-              <span>{geminiApiKey ? 'Gemini Connected' : 'Gemini Key Missing'}</span>
+              {(geminiApiKey || isServerApiKeySet) ? <Check size={12} /> : <AlertCircle size={12} />}
+              <span>
+                {geminiApiKey ? 'Gemini Connected' : 
+                 isServerApiKeySet ? 'Gemini Connected (Server)' : 
+                 'Gemini Key Missing'}
+              </span>
             </div>
 
             <button 
